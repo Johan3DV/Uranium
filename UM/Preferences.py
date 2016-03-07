@@ -12,6 +12,8 @@ import configparser
 ##      Preferences are application based settings that are saved for future use. 
 #       Typical preferences would be window size, standard machine, etc.
 class Preferences(SignalEmitter):
+    PreferencesVersion = 2
+
     def __init__(self):
         super().__init__()
 
@@ -101,7 +103,7 @@ class Preferences(SignalEmitter):
                 if pref.getValue() != pref.getDefault():
                     parser[group][key] = str(pref.getValue())
 
-        parser["general"]["version"] = "2"
+        parser["general"]["version"] = str(Preferences.PreferencesVersion)
 
         try:
             with SaveFile(file, "wt") as f:
@@ -145,7 +147,7 @@ class Preferences(SignalEmitter):
             self._parser = configparser.ConfigParser(interpolation = None)
             self._parser.read(file)
 
-            if self._parser["general"]["version"] != "2":
+            if self._parser["general"]["version"] != str(Preferences.PreferencesVersion):
                 Logger.log("w", "Old config file found, ignoring")
                 self._parser = None
                 return
