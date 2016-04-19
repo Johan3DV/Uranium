@@ -12,6 +12,17 @@ class InvalidFileError(SettingsError):
     def __init__(self, path):
         super().__init__("File {0} is an invalid settings file".format(path))
 
+##  Error thrown when a serialised settings document misses certain keys or
+#   values.
+#
+#   Use InvalidFileError when the file name is known. This is intended for when
+#   machine instances are not loaded from file but from strings.
+class InvalidFormatError(SettingsError):
+    ##  Creates the invalid format error.
+    #
+    #   \param key The key that caused the error.
+    def __init__(self, key):
+        super().__init__("Invalid settings file encountered. Something is wrong with key {0}.".format(key))
 
 ##  Error thrown when a setting file's version does not match the current file version.
 class InvalidVersionError(SettingsError):
