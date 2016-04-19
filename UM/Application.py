@@ -12,6 +12,7 @@ from UM.Logger import Logger
 from UM.Preferences import Preferences
 from UM.OutputDevice.OutputDeviceManager import OutputDeviceManager
 from UM.Settings.MachineManager import MachineManager
+from UM.VersionUpgradeManager import VersionUpgradeManager
 from UM.i18n import i18nCatalog
 
 import threading
@@ -77,6 +78,7 @@ class Application(SignalEmitter):
         self._backend = None
         self._output_device_manager = OutputDeviceManager()
         self._machine_manager = MachineManager(self._application_name)
+        self._version_upgrade_manager = VersionUpgradeManager()
 
         self._required_plugins = []
 
