@@ -15,7 +15,7 @@ from UM.Settings.Profile import Profile
 #     The machine instance defines specific overrides of certain settings that are only
 #     valid for this -single instance- of the machine (eg; Some after market modification)
 class MachineInstance(SignalEmitter):
-    MachineInstanceVersion = 1
+    MachineInstanceVersion = 2
 
     def __init__(self, machine_manager, **kwargs):
         super().__init__()

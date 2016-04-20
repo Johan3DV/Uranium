@@ -32,7 +32,7 @@ catalog = i18nCatalog("uranium")
 #   of the profile(s) it was based on. This is done so settings can be reset to the value of the
 #   profile the working profile was based on.
 class Profile(SignalEmitter):
-    ProfileVersion = 1
+    ProfileVersion = 2
 
     ##  Constructor.
     def __init__(self, machine_manager, read_only = False):
