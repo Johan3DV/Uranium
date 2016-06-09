@@ -37,6 +37,7 @@ class ContainerStack(ContainerInterface.ContainerInterface, PluginObject):
         self._metadata = {}
         self._containers = []
         self._next_stack = None
+        self._read_only = False
         self._dirty = True
 
     ##  \copydoc ContainerInterface::getId
@@ -63,6 +64,15 @@ class ContainerStack(ContainerInterface.ContainerInterface, PluginObject):
         if name != self._name:
             self._name = name
             self.nameChanged.emit()
+
+    ##  \copydoc ContainerInterface::isReadOnly
+    #
+    #   Reimplemented from ContainerInterface
+    def isReadOnly(self):
+        return self._read_only
+
+    def setReadOnly(self, read_only):
+        self._read_only = read_only
 
     ##  \copydoc ContainerInterface::getMetaData
     #
@@ -101,6 +111,10 @@ class ContainerStack(ContainerInterface.ContainerInterface, PluginObject):
 
     def isDirty(self):
         return self._dirty
+
+    def setDirty(self, dirty):
+        self._dirty = dirty
+
 
     ##  \copydoc ContainerInterface::getProperty
     #
@@ -273,6 +287,21 @@ class ContainerStack(ContainerInterface.ContainerInterface, PluginObject):
             return self._containers[-1]
 
         return None
+
+    ##  Get the SettingDefinition object for a specified key
+    def getSettingDefinition(self, key):
+        for container in self._containers:
+            if not isinstance(container, DefinitionContainer):
+                continue
+
+            settings = container.findDefinitions(key = key)
+            if settings:
+                return settings[0]
+
+        if self._next_stack:
+            return self._next_stack.getSettingDefinition(key)
+        else:
+            return None
 
     ##  Find a container matching certain criteria.
     #

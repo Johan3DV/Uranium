@@ -42,6 +42,8 @@ class DefinitionContainer(ContainerInterface.ContainerInterface, PluginObject):
         self._definitions = []
         self._i18n_catalog = i18n_catalog
 
+        self._definition_cache = {}
+
     ##  Reimplement __setattr__ so we can make sure the definition remains unchanged after creation.
     def __setattr__(self, name, value):
         super().__setattr__(name, value)
@@ -62,6 +64,15 @@ class DefinitionContainer(ContainerInterface.ContainerInterface, PluginObject):
         return self._name
 
     name = property(getName)
+
+    ##  \copydoc ContainerInterface::isReadOnly
+    #
+    #   Reimplemented from ContainerInterface
+    def isReadOnly(self):
+        return True
+
+    def setReadOnly(self, read_only):
+        pass
 
     ##  \copydoc ContainerInterface::getMetaData
     #
@@ -94,14 +105,14 @@ class DefinitionContainer(ContainerInterface.ContainerInterface, PluginObject):
     #
     #   Reimplemented from ContainerInterface.
     def getProperty(self, key, property_name):
-        definitions = self.findDefinitions(key = key)
-        if not definitions:
+        definition = self._getDefinition(key)
+        if not definition:
             return None
 
         try:
-            value = getattr(definitions[0], property_name)
+            value = getattr(definition, property_name)
             if value is None and property_name == "value":
-                value = getattr(definitions[0], "default_value")
+                value = getattr(definition, "default_value")
             return value
         except AttributeError:
             return None
@@ -110,10 +121,10 @@ class DefinitionContainer(ContainerInterface.ContainerInterface, PluginObject):
     #
     #   Reimplemented from ContainerInterface
     def hasProperty(self, key, property_name):
-        definitions = self.findDefinitions(key = key)
-        if not definitions:
+        definition = self._getDefinition(key)
+        if not definition:
             return False
-        return hasattr(definitions[0], property_name)
+        return hasattr(definition, property_name)
 
     ##  This signal is unused since the definition container is immutable, but is provided for API consistency.
     propertyChanged = Signal()
@@ -180,6 +191,12 @@ class DefinitionContainer(ContainerInterface.ContainerInterface, PluginObject):
     #
     #   \param kwargs \type{dict} A dictionary of keyword arguments containing key-value pairs which should match properties of the definition.
     def findDefinitions(self, **kwargs):
+        if len(kwargs) == 1 and "key" in kwargs:
+            # If we are searching for a single definition by exact key, we can speed up things by retrieving from the cache.
+            key = kwargs.get("key")
+            if key in self._definition_cache:
+                return [self._definition_cache[key]]
+
         definitions = []
         for definition in self._definitions:
             definitions.extend(definition.findDefinitions(**kwargs))
@@ -192,7 +209,7 @@ class DefinitionContainer(ContainerInterface.ContainerInterface, PluginObject):
     def _loadFile(self, file_name):
         path = Resources.getPath(Resources.DefinitionContainers, file_name + ".def.json")
         contents = {}
-        with open(path) as f:
+        with open(path, encoding = "utf-8") as f:
             contents = json.load(f, object_pairs_hook=collections.OrderedDict)
         return contents
 
@@ -262,15 +279,25 @@ class DefinitionContainer(ContainerInterface.ContainerInterface, PluginObject):
             return
 
         for setting in function.getUsedSettings():
-            other = self.findDefinitions(key = setting)
+            other = self._getDefinition(setting)
             if not other:
                 Logger.log("w", "Function for definition %s references unknown definition %s", definition.key, setting)
                 continue
-
-            other = other[0]
 
             relation = SettingRelation.SettingRelation(definition, other, SettingRelation.RelationType.RequiresTarget, property)
             definition.relations.append(relation)
 
             relation = SettingRelation.SettingRelation(other, definition, SettingRelation.RelationType.RequiredByTarget, property)
             other.relations.append(relation)
+
+    def _getDefinition(self, key):
+        definition = None
+        if key in self._definition_cache:
+            definition = self._definition_cache[key]
+        else:
+            definitions = self.findDefinitions(key = key)
+            if definitions:
+                definition = definitions[0]
+                self._definition_cache[key] = definition
+
+        return definition
