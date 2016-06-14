@@ -423,7 +423,7 @@ class MeshData():
             self._colors = numpy.concatenate((self._colors[0:self._vertex_count], colors))
     
     # Add faces defined by indices into vertices with vetex colors defined by colors
-    # Assumes vertices and indices has the same length.
+    # Assumes vertices and colors have the same length.
     #
     def addFacesWithColor(self, vertices, indices, colors):
         #If badly used, crash and burn
